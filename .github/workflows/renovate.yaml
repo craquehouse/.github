@@ -84,7 +84,15 @@ jobs:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_DRY_RUN: ${{ inputs.dryRun == true }}
           RENOVATE_AUTODISCOVER: true
-          RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository_owner }}/${{ inputs.autodiscoverFilter || '*' }}
+          # home-ops and container-images run their own dedicated Renovate
+          # workflows (home-ops on the repo-scoped self-hosted ARC runner, pinned
+          # to a specific Renovate version). Excluding them here prevents this
+          # org-wide sweep from double-processing those repos — which would cause
+          # PR/dependency-dashboard races and run an unpinned Renovate version
+          # against home-ops. Negative globs (`!owner/repo`) are honored by
+          # Renovate's autodiscoverFilter. Tracked for consolidation: see the
+          # "Consolidate Renovate execution" issue in this repo.
+          RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository_owner }}/${{ inputs.autodiscoverFilter || '*' }},!${{ github.repository_owner }}/home-ops,!${{ github.repository_owner }}/container-images
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           RENOVATE_PLATFORM: github
           RENOVATE_PLATFORM_COMMIT: true
